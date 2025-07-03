@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Send, Bot, User, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,26 +14,70 @@ interface Message {
   timestamp: Date;
 }
 
+const CHAT_HISTORY_KEY = 'safespace_chat_history';
+
 const ChatInterface = () => {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      text: "Hi there! I'm here to listen and support you. How are you feeling today?",
-      sender: 'bot',
-      timestamp: new Date(),
-    },
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [apiKey, setApiKey] = useState<string | null>(null);
   const [showApiKeyModal, setShowApiKeyModal] = useState(false);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
 
+  // Load chat history and API key on component mount
   useEffect(() => {
     const storedApiKey = localStorage.getItem('gemini_api_key');
     if (storedApiKey) {
       setApiKey(storedApiKey);
     }
+
+    const storedHistory = localStorage.getItem(CHAT_HISTORY_KEY);
+    if (storedHistory) {
+      try {
+        const parsedHistory = JSON.parse(storedHistory);
+        // Convert timestamp strings back to Date objects
+        const historyWithDates = parsedHistory.map((msg: any) => ({
+          ...msg,
+          timestamp: new Date(msg.timestamp)
+        }));
+        setMessages(historyWithDates);
+      } catch (error) {
+        console.error('Error loading chat history:', error);
+        // If there's an error, start with welcome message
+        setMessages([{
+          id: '1',
+          text: "Hi there! I'm here to listen and support you. How are you feeling today?",
+          sender: 'bot',
+          timestamp: new Date(),
+        }]);
+      }
+    } else {
+      // No stored history, start with welcome message
+      setMessages([{
+        id: '1',
+        text: "Hi there! I'm here to listen and support you. How are you feeling today?",
+        sender: 'bot',
+        timestamp: new Date(),
+      }]);
+    }
   }, []);
+
+  // Save chat history whenever messages change
+  useEffect(() => {
+    if (messages.length > 0) {
+      localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(messages));
+    }
+  }, [messages]);
+
+  // Auto-scroll to bottom when new messages are added
+  useEffect(() => {
+    if (scrollAreaRef.current) {
+      const scrollElement = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
+      if (scrollElement) {
+        scrollElement.scrollTop = scrollElement.scrollHeight;
+      }
+    }
+  }, [messages, isLoading]);
 
   const handleSendMessage = async () => {
     if (!inputValue.trim()) return;
@@ -56,7 +100,15 @@ const ChatInterface = () => {
     setIsLoading(true);
 
     try {
-      const botResponseText = await callGeminiAPI(currentMessage, apiKey);
+      // Create conversation context for the AI
+      const conversationHistory = messages.slice(-10); // Last 10 messages for context
+      const contextString = conversationHistory.map(msg => 
+        `${msg.sender === 'user' ? 'User' : 'Assistant'}: ${msg.text}`
+      ).join('\n');
+      
+      const messageWithContext = `Previous conversation:\n${contextString}\n\nCurrent message: ${currentMessage}`;
+      
+      const botResponseText = await callGeminiAPI(messageWithContext, apiKey);
       const botResponse: Message = {
         id: (Date.now() + 1).toString(),
         text: botResponseText,
@@ -116,7 +168,7 @@ const ChatInterface = () => {
       </div>
 
       {/* Messages */}
-      <ScrollArea className="flex-1 p-4">
+      <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>
         <div className="space-y-4">
           {messages.map((message) => (
             <div
