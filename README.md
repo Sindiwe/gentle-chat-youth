@@ -59,6 +59,9 @@ Dashboard (Future): Streamlit / Power BI for aggregated insights.
 
 **URL**: https://lovable.dev/projects/9a7f57b3-56ec-4181-8aa0-a9838f1b2afa
 
+# Project App URL:
+https://gentle-chat-youth.lovable.app/
+
 ## How can I edit this code?
 
 There are several ways of editing your application.
