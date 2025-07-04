@@ -1,5 +1,5 @@
 
-import { MessageCircle, Heart, BookOpen } from 'lucide-react';
+import { MessageCircle, Heart, BookOpen, Phone } from 'lucide-react';
 
 interface NavigationProps {
   activeTab: string;
@@ -11,6 +11,7 @@ const Navigation = ({ activeTab, onTabChange }: NavigationProps) => {
     { id: 'chat', label: 'Chat', icon: MessageCircle },
     { id: 'mood', label: 'Mood', icon: Heart },
     { id: 'journal', label: 'Journal', icon: BookOpen },
+    { id: 'resources', label: 'Resources', icon: Phone },
   ];
 
   return (

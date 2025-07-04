@@ -4,6 +4,7 @@ import { MessageCircle, Heart, BookOpen } from 'lucide-react';
 import ChatInterface from '../components/ChatInterface';
 import MoodTracker from '../components/MoodTracker';
 import JournalEntry from '../components/JournalEntry';
+import Resources from '../components/Resources';
 import Navigation from '../components/Navigation';
 
 const Index = () => {
@@ -17,6 +18,8 @@ const Index = () => {
         return <MoodTracker />;
       case 'journal':
         return <JournalEntry />;
+      case 'resources':
+        return <Resources />;
       default:
         return <ChatInterface />;
     }
